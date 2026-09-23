@@ -350,3 +350,8 @@ MigrationBackup/
 .ionide/
 BUILD.md
 .vscode/
+# macOS local build output (build-and-run-card-manager-macOS.sh)
+_build-macos/
+
+# Third-party redump2cdi binaries (https://dreamcast.wiki/Redump2CDI), fetched locally
+redump2cdi/

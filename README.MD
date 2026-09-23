@@ -1,4 +1,6 @@
-# openMenu Virtual Folder Bundle
+# openMenu-NX
+
+> A personal fork of [openMenu Virtual Folder Bundle](https://github.com/DerekPascarella/openMenu-Virtual-Folder-Bundle), kept in sync with upstream. Networking now comes from upstream's Dreamcast Now! support (v1.7.0+), so this fork no longer carries its own network/FTP code. The only extra here is `build-and-run-card-manager-macOS.sh`, which builds GD MENU Card Manager for your Mac and launches it.
 
 <img align="right" width="300" src="https://github.com/DerekPascarella/openMenu-Virtual-Folder-Bundle/blob/main/images/preview.gif?raw=true">
 

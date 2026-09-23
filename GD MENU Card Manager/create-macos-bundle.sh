@@ -2,6 +2,7 @@
 # Creates a proper macOS .app bundle from dotnet publish output
 # Usage: ./create-macos-bundle.sh <publish_output_dir> <version> <output_dir> [arch]
 # Arch defaults to "x64" if not specified.
+# Set KEEP_APP_BUNDLE=1 to leave the signed .app in place instead of archiving it.
 
 set -e
 
@@ -91,6 +92,11 @@ else
 fi
 
 echo "macOS app bundle created at: ${BUNDLE_PATH}"
+
+if [ "${KEEP_APP_BUNDLE:-0}" == "1" ]; then
+    echo "Done!"
+    exit 0
+fi
 
 # Create a tar.gz archive
 echo "Creating tar.gz archive..."
