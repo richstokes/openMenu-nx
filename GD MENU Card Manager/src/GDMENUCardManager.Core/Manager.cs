@@ -131,6 +131,12 @@ namespace GDMENUCardManager.Core
         /// </summary>
         public bool EnableFatSort = false;
 
+        /// <summary>
+        /// Set true to download the latest dreamcast-homebrew CDIs on each save
+        /// and put them on the card, replacing any copies already there.
+        /// </summary>
+        public bool EnableHomebrewSync = false;
+
         // set during save when patching changes a flag after the list text was built
         private bool savePatchChangedFlags;
         private readonly List<string> savePatchFailures = new List<string>();
@@ -2083,7 +2089,7 @@ namespace GDMENUCardManager.Core
                 if (stranded.Count > 0)
                     throw new Exception(CardOrder.StrandedMessage(sdPath, stranded));
 
-                if (ItemList.Count == 0 || await Helper.DependencyManager.ShowYesNoDialog("Confirmation", $"Save changes to \"{sdPath}\" drive?") == false)
+                if ((ItemList.Count == 0 && !EnableHomebrewSync) || await Helper.DependencyManager.ShowYesNoDialog("Confirmation", $"Save changes to \"{sdPath}\" drive?") == false)
                 {
                     return false;
                 }
@@ -2095,6 +2101,9 @@ namespace GDMENUCardManager.Core
                 {
                     gdemuIsAuthentic = await Helper.DependencyManager.ShowGdemuTypeDialog();
                 }
+
+                if (EnableHomebrewSync && !await SyncHomebrew(tempFolderRoot))
+                    return false;
 
                 containsCompressedFile = ItemList.Any(item =>
                     item.SdNumber == 0 &&
@@ -3937,6 +3946,66 @@ namespace GDMENUCardManager.Core
                 if (progress.ProcessedItems != total)
                     throw new Exception("Operation canceled.\nThere might be unused folders/files on the SD card.");
             }
+        }
+
+        /// <summary>
+        /// Downloads the latest homebrew CDIs and puts them in the list. An entry
+        /// already in the list with the same serial (or, failing that, the same
+        /// title) is replaced in place, keeping its title and folders, so the save
+        /// swaps the old copy for the new one. Returns false when the save should
+        /// stop.
+        /// </summary>
+        private async Task<bool> SyncHomebrew(string tempFolderRoot)
+        {
+            var progressWindow = Helper.DependencyManager.CreateAndShowProgressWindow();
+            progressWindow.TextContent = "Downloading homebrew...";
+            do { await Task.Delay(50); } while (!progressWindow.IsInitialized);
+
+            var newItems = new List<GdItem>();
+            string error = null;
+            try
+            {
+                var progress = new Progress<string>(message => progressWindow.TextContent = message);
+                foreach (var path in await HomebrewSync.DownloadAsync(tempFolderRoot, progress))
+                    newItems.Add(await ImageHelper.CreateGdItemAsync(path, ArchiveAddMode.ParseNow));
+            }
+            catch (Exception ex)
+            {
+                error = ex.Message;
+            }
+            finally
+            {
+                progressWindow.AllowClose();
+                progressWindow.Close();
+            }
+
+            if (error != null)
+            {
+                return await Helper.DependencyManager.ShowYesNoDialog("Homebrew Download Failed",
+                    $"The homebrew from {HomebrewSync.Repo} could not be downloaded:\n\n{error}\n\n" +
+                    "Save the rest of the changes without it?");
+            }
+
+            foreach (var newItem in newItems)
+            {
+                var existing = ItemList.FirstOrDefault(x => !x.IsMenuItem &&
+                        !string.IsNullOrEmpty(newItem.ProductNumber) && x.ProductNumber == newItem.ProductNumber)
+                    ?? ItemList.FirstOrDefault(x => !x.IsMenuItem &&
+                        string.Equals(x.Name?.Trim(), newItem.Name?.Trim(), StringComparison.OrdinalIgnoreCase));
+
+                if (existing == null)
+                {
+                    ItemList.Add(newItem);
+                    continue;
+                }
+
+                newItem.Name = existing.Name;
+                newItem.Folder = existing.Folder;
+                newItem.AlternativeFolders = existing.AlternativeFolders;
+                ItemList[ItemList.IndexOf(existing)] = newItem;
+            }
+
+            return true;
         }
 
         public async ValueTask SortList()
