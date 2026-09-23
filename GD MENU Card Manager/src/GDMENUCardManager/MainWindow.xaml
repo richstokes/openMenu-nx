@@ -428,7 +428,7 @@
                 </Button>
                 <CheckBox Grid.Column="4" x:Name="cbLockCheck" VerticalAlignment="Center" Margin="10 0" IsChecked="{Binding EnableLockCheck, Mode=TwoWay}" ToolTip="Check for locked files/folders before saving">File/Folder Lock Check</CheckBox>
                 <CheckBox Grid.Column="5" x:Name="cbFatSort" VerticalAlignment="Center" Margin="0 0 10 0" IsChecked="{Binding EnableFatSort, Mode=TwoWay}" ToolTip="Perform a FAT sort of the SD card after saving (not required by GDEMU, but keeps the root directory entries in numeric order)">FAT Sort</CheckBox>
-                <CheckBox Grid.Column="6" x:Name="cbHomebrewSync" VerticalAlignment="Center" Margin="0 0 10 0" IsChecked="{Binding EnableHomebrewSync, Mode=TwoWay}" ToolTip="On every save, download the latest homebrew CDIs from github.com/richstokes/dreamcast-homebrew and put them on the SD card, replacing any older copies">Update Homebrew</CheckBox>
+                <CheckBox Grid.Column="6" x:Name="cbHomebrewSync" VerticalAlignment="Center" Margin="0 0 10 0" IsChecked="{Binding EnableHomebrewSync, Mode=TwoWay}" ToolTip="On every save, download the latest homebrew CDIs from github.com/richstokes/dreamcast-homebrew and put them on the SD card, replacing any older copies">RS Homebrew</CheckBox>
                 <Button Grid.Column="7" Margin="10 0" Padding="0 10" Click="ButtonSaveChanges_Click" FontWeight="Bold" ToolTip="Save changes to SD card" IsEnabled="{Binding IsNotFilterActive, Mode=OneWay}">Save Changes</Button>
                 <Button Grid.Column="8" Margin="0 0 5 0" Padding="10 10" Click="ButtonUndo_Click" ToolTip="Undo last change"
                         IsEnabled="{Binding Manager.UndoManager.CanUndo, Mode=OneWay}">Undo</Button>
