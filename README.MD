@@ -1,6 +1,6 @@
 # openMenu-NX
 
-> A personal fork of [openMenu Virtual Folder Bundle](https://github.com/DerekPascarella/openMenu-Virtual-Folder-Bundle), kept in sync with upstream. Networking now comes from upstream's Dreamcast Now! support (v1.7.0+), so this fork no longer carries its own network/FTP code. The only extra here is `build-and-run-card-manager-macOS.sh`, which builds GD MENU Card Manager for your Mac and launches it.
+> A personal fork of [openMenu Virtual Folder Bundle](https://github.com/DerekPascarella/openMenu-Virtual-Folder-Bundle), kept in sync with upstream. Networking now comes from upstream's Dreamcast Now! support (v1.7.0+), so this fork no longer carries its own network/FTP code. See [Changes in This Fork](#changes-in-this-fork) for what is different here.
 
 <img align="right" width="300" src="https://github.com/DerekPascarella/openMenu-Virtual-Folder-Bundle/blob/main/images/preview.gif?raw=true">
 
@@ -18,6 +18,7 @@ To accommodate the new openMenu, a modified version of [GD MENU Card Manager](ht
 
 ## Table of Contents
 
+- [Changes in This Fork](#changes-in-this-fork)
 - [Current Version](#current-version)
 - [Roadmap Ideas](#roadmap-ideas)
 - [Changelog](#changelog)
@@ -102,6 +103,17 @@ To accommodate the new openMenu, a modified version of [GD MENU Card Manager](ht
   - [openMenu](#openmenu)
   - [GD MENU Card Manager](#gd-menu-card-manager)
   - [Third-Party Components](#third-party-components)
+
+---
+
+## Changes in This Fork
+
+Everything below is on top of upstream. The rest of this README is upstream's, and applies here unchanged.
+
+- openMenu: if no controller, keyboard, or mouse input is detected within 15 seconds of boot, the `dcload-ip` image on the SD card is launched automatically. Any input before then cancels it. The entry is found by title (`dcload-ip`, `dcload_ip`, `dcload ip`, or `dcloadip`, case-insensitive), falling back to any non-serial `dcload` entry. Nothing happens when the card has no such image.
+- GD MENU Card Manager: new "RS Homebrew" option. When ticked, each save downloads every CDI from the continuous release of [richstokes/dreamcast-homebrew](https://github.com/richstokes/dreamcast-homebrew), verifies it against `SHA256SUMS`, and puts it on the card, replacing existing entries with the same serial or title in place.
+- GD MENU Card Manager: `build-and-run-card-manager-macOS.sh` builds the app for macOS and launches it. `create-macos-bundle.sh` gained a `KEEP_APP_BUNDLE` option.
+- Folders theme: replaced the `FOLDERS` and `FOLDERS_0` background images.
 
 ---
 

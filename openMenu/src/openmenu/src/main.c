@@ -34,6 +34,7 @@
 #include <openmenu_debug.h>
 #include <openmenu_savefile.h>
 #include <openmenu_settings.h>
+#include "backend/dcload_autoboot.h"
 #include "backend/gdemu_sdk.h"
 #include "backend/last_game.h"
 #include "ui/common.h"
@@ -307,6 +308,9 @@ init() {
 
     /* Initialize folder tree after loading game list */
     list_folder_init();
+
+    /* Hands-off boot into dcload-ip needs the list to know if one is there */
+    dcload_autoboot_init();
 
     if (!sf_filter[0]) {
         switch (sf_sort[0]) {
@@ -754,6 +758,9 @@ main(int argc, char* argv[]) {
     for (;;) {
         z_reset();
         enum control input = translate_input();
+        if (input != NONE) {
+            dcload_autoboot_cancel();
+        }
 #if DEBUG_VMU_SYNC
         if (!handle_input_vmu_sync_debug(input))
 #endif
@@ -762,6 +769,7 @@ main(int argc, char* argv[]) {
             }
         /* A launch that came back (e.g., a missing loader file) leaves the box behind. */
         hangup_overlay_set(0);
+        dcload_autoboot_tick();
         vmu_lcd_check_insertions();
         dcnow_conn_tick();
         dcnow_vmu_tick();

@@ -13,6 +13,7 @@ set(OPENMENU_SOURCES
         src/main.c
         src/backend/bgm.c
         src/backend/boot_defaults.c
+        src/backend/dcload_autoboot.c
         src/backend/dcnow_net.c
         src/backend/dcnow_fetch.c
         src/backend/dcnow_vmu.c

@@ -1383,6 +1383,48 @@ list_find_by_product(const char* product) {
     return best;
 }
 
+/* Case-insensitive substring test. newlib does not promise strcasestr. */
+static int
+name_contains_ci(const char* haystack, const char* needle) {
+    size_t n = strlen(needle);
+
+    if (!n) {
+        return 1;
+    }
+    for (; *haystack; haystack++) {
+        size_t i;
+        for (i = 0; i < n && haystack[i]; i++) {
+            if (tolower((unsigned char)haystack[i]) != tolower((unsigned char)needle[i])) {
+                break;
+            }
+        }
+        if (i == n) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+const gd_item*
+list_find_by_name_ci(const char* needle) {
+    if (!needle || !needle[0] || !gd_slots_BASE) {
+        return NULL;
+    }
+
+    /* Skip openMenu itself in slot 0 */
+    for (int i = 1; i < num_items_BASE; i++) {
+        const gd_item* item = &gd_slots_BASE[i];
+
+        if (!strncmp(item->disc, "DIR", 3)) {
+            continue;
+        }
+        if (name_contains_ci(item->name, needle)) {
+            return item;
+        }
+    }
+    return NULL;
+}
+
 /* The disc of a set that the flat views actually put on screen. Compact
  * keeps the lowest numbered one, so a hidden disc points at that instead. */
 const gd_item*

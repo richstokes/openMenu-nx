@@ -71,6 +71,9 @@ struct gd_item** list_recent_entries(int* count);
 /* Finding a game again after a reboot */
 const struct gd_item* list_find_by_hash(unsigned int hash);
 const struct gd_item* list_find_by_product(const char* product);
+/* First disc whose title contains the needle, ignoring case. Folder rows
+ * never match. NULL when nothing on the card is called that. */
+const struct gd_item* list_find_by_name_ci(const char* needle);
 const struct gd_item* list_visible_disc(const struct gd_item* item);
 int list_index_of(const struct gd_item* item);
 int list_index_of_product(const char* product);
