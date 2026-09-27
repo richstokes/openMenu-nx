@@ -1,9 +1,17 @@
 #!/bin/bash
-# Builds the latest GD MENU Card Manager (AvaloniaUI) for this Mac and launches it.
+# Builds openMenu for the Dreamcast, then builds the latest GD MENU Card
+# Manager (AvaloniaUI) for this Mac with that openMenu inside it, and launches it.
 # Usage: ./build-and-run-card-manager-macOS.sh
 #
-# Output goes to "GD MENU Card Manager/_build-macos" (gitignored) and is
-# replaced on every run.
+# openMenu is cross-compiled in Docker (see openMenu/BUILD_INSTRUCTIONS.md).
+# The image is built for the Mac's own architecture, so Apple Silicon runs it
+# natively rather than under amd64 emulation. The first run builds the
+# toolchain image, which takes a while; later runs reuse it. The resulting 1ST_READ.BIN replaces the copy the Card Manager
+# ships in src/GDMENUCardManager.Core/tools/openMenu/menu_data, so the card
+# always gets the openMenu built from this checkout.
+#
+# Card Manager output goes to "GD MENU Card Manager/_build-macos" (gitignored)
+# and is replaced on every run.
 
 set -euo pipefail
 
@@ -44,6 +52,47 @@ case "$(uname -m)" in
         ;;
 esac
 
+if ! command -v docker &> /dev/null; then
+    echo "ERROR: docker not found. Install Docker Desktop (needed to build openMenu):"
+    echo "  brew install --cask docker"
+    exit 1
+fi
+
+if ! docker info &> /dev/null; then
+    echo "ERROR: Docker is not running. Start Docker Desktop and try again."
+    exit 1
+fi
+
+# ---- openMenu (Dreamcast) ----
+OPENMENU_DIR="${REPO_ROOT}/openMenu"
+OPENMENU_IMAGE="openmenu-build"
+OPENMENU_BIN="${OPENMENU_DIR}/cmake-build-dc-release/bin/1ST_READ.BIN"
+CARD_MANAGER_OPENMENU_BIN="${PROJECT_DIR}/src/GDMENUCardManager.Core/tools/openMenu/menu_data/1ST_READ.BIN"
+
+echo "================================================"
+echo "Building openMenu for Dreamcast"
+echo "================================================"
+
+if ! docker image inspect "${OPENMENU_IMAGE}" &> /dev/null; then
+    echo "Toolchain image ${OPENMENU_IMAGE} not found; building it (first time only, this is slow)..."
+    docker build -t "${OPENMENU_IMAGE}" "${OPENMENU_DIR}/docker"
+fi
+
+docker run --rm \
+    --user "$(id -u):$(id -g)" \
+    -v "${OPENMENU_DIR}:/workspaces/openmenu" -w /workspaces/openmenu \
+    "${OPENMENU_IMAGE}" \
+    bash -c "source /opt/toolchains/dc/kos/environ.sh && cmake --preset dc-release && cmake --build --preset dc-release"
+
+if [ ! -f "${OPENMENU_BIN}" ]; then
+    echo "ERROR: openMenu build produced no ${OPENMENU_BIN}"
+    exit 1
+fi
+
+cp "${OPENMENU_BIN}" "${CARD_MANAGER_OPENMENU_BIN}"
+echo "Installed openMenu into Card Manager: ${CARD_MANAGER_OPENMENU_BIN}"
+
+# ---- GD MENU Card Manager (macOS) ----
 cd "${PROJECT_DIR}"
 
 VERSION="$(tr -d '[:space:]' < src/version.txt)"

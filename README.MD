@@ -112,7 +112,7 @@ Everything below is on top of upstream. The rest of this README is upstream's, a
 
 - openMenu: if no controller, keyboard, or mouse input is detected within 15 seconds of boot, the `dcload-ip` image on the SD card is launched automatically. Any input before then cancels it. The entry is found by title (`dcload-ip`, `dcload_ip`, `dcload ip`, or `dcloadip`, case-insensitive), falling back to any non-serial `dcload` entry. Nothing happens when the card has no such image.
 - GD MENU Card Manager: new "RS Homebrew" option. When ticked, each save downloads every CDI from the continuous release of [richstokes/dreamcast-homebrew](https://github.com/richstokes/dreamcast-homebrew), verifies it against `SHA256SUMS`, and puts it on the card, replacing existing entries with the same serial or title in place.
-- GD MENU Card Manager: `build-and-run-card-manager-macOS.sh` builds the app for macOS and launches it. `create-macos-bundle.sh` gained a `KEEP_APP_BUNDLE` option.
+- `build-and-run-card-manager-macOS.sh` cross-compiles openMenu in Docker, installs the resulting `1ST_READ.BIN` into GD MENU Card Manager, then builds the Card Manager for macOS and launches it. The Docker image is built for the Mac's own architecture (native on Apple Silicon) and uses every CPU core. `create-macos-bundle.sh` gained a `KEEP_APP_BUNDLE` option.
 - Folders theme: replaced the `FOLDERS` and `FOLDERS_0` background images.
 
 ---

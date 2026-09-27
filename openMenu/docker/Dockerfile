@@ -43,8 +43,9 @@ RUN git clone https://github.com/KallistiOS/KallistiOS.git \
   test "$(git -C /opt/toolchains/dc/kos rev-parse HEAD)" = \
     "d6f42aecdfef897de019f8a82345194bec17d1c6"
 
+# dc-chain defaults to two jobs; use every core the build machine has.
 RUN cd /opt/toolchains/dc/kos/utils/dc-chain && \
-  make && \
+  make makejobs=$(nproc) && \
   make clean
 
 COPY kos_patch/fs_iso9660.patch /opt/toolchains/dc/kos/
