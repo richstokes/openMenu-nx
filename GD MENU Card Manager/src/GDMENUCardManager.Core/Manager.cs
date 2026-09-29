@@ -137,6 +137,12 @@ namespace GDMENUCardManager.Core
         /// </summary>
         public bool EnableHomebrewSync = false;
 
+        /// <summary>
+        /// Set true to download the latest EmuTOS Dreamcast port CDI on each
+        /// save and put it on the card, replacing any copy already there.
+        /// </summary>
+        public bool EnableEmuTosSync = false;
+
         // set during save when patching changes a flag after the list text was built
         private bool savePatchChangedFlags;
         private readonly List<string> savePatchFailures = new List<string>();
@@ -2089,7 +2095,7 @@ namespace GDMENUCardManager.Core
                 if (stranded.Count > 0)
                     throw new Exception(CardOrder.StrandedMessage(sdPath, stranded));
 
-                if ((ItemList.Count == 0 && !EnableHomebrewSync) || await Helper.DependencyManager.ShowYesNoDialog("Confirmation", $"Save changes to \"{sdPath}\" drive?") == false)
+                if ((ItemList.Count == 0 && !EnableHomebrewSync && !EnableEmuTosSync) || await Helper.DependencyManager.ShowYesNoDialog("Confirmation", $"Save changes to \"{sdPath}\" drive?") == false)
                 {
                     return false;
                 }
@@ -2102,7 +2108,10 @@ namespace GDMENUCardManager.Core
                     gdemuIsAuthentic = await Helper.DependencyManager.ShowGdemuTypeDialog();
                 }
 
-                if (EnableHomebrewSync && !await SyncHomebrew(tempFolderRoot))
+                if (EnableHomebrewSync && !await SyncRelease(ReleaseSync.Homebrew, tempFolderRoot))
+                    return false;
+
+                if (EnableEmuTosSync && !await SyncRelease(ReleaseSync.EmuTos, tempFolderRoot))
                     return false;
 
                 containsCompressedFile = ItemList.Any(item =>
@@ -3949,16 +3958,16 @@ namespace GDMENUCardManager.Core
         }
 
         /// <summary>
-        /// Downloads the latest homebrew CDIs and puts them in the list. An entry
+        /// Downloads the release's latest CDIs and puts them in the list. An entry
         /// already in the list with the same serial (or, failing that, the same
         /// title) is replaced in place, keeping its title and folders, so the save
         /// swaps the old copy for the new one. Returns false when the save should
         /// stop.
         /// </summary>
-        private async Task<bool> SyncHomebrew(string tempFolderRoot)
+        private async Task<bool> SyncRelease(ReleaseSync release, string tempFolderRoot)
         {
             var progressWindow = Helper.DependencyManager.CreateAndShowProgressWindow();
-            progressWindow.TextContent = "Downloading homebrew...";
+            progressWindow.TextContent = $"Downloading {release.Label}...";
             do { await Task.Delay(50); } while (!progressWindow.IsInitialized);
 
             var newItems = new List<GdItem>();
@@ -3966,7 +3975,7 @@ namespace GDMENUCardManager.Core
             try
             {
                 var progress = new Progress<string>(message => progressWindow.TextContent = message);
-                foreach (var path in await HomebrewSync.DownloadAsync(tempFolderRoot, progress))
+                foreach (var path in await release.DownloadAsync(tempFolderRoot, progress))
                     newItems.Add(await ImageHelper.CreateGdItemAsync(path, ArchiveAddMode.ParseNow));
             }
             catch (Exception ex)
@@ -3981,8 +3990,8 @@ namespace GDMENUCardManager.Core
 
             if (error != null)
             {
-                return await Helper.DependencyManager.ShowYesNoDialog("Homebrew Download Failed",
-                    $"The homebrew from {HomebrewSync.Repo} could not be downloaded:\n\n{error}\n\n" +
+                return await Helper.DependencyManager.ShowYesNoDialog("Download Failed",
+                    $"The {release.Label} from {release.Repo} could not be downloaded:\n\n{error}\n\n" +
                     "Save the rest of the changes without it?");
             }
 

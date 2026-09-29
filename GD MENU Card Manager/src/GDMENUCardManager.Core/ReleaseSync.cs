@@ -11,22 +11,40 @@ using System.Threading.Tasks;
 namespace GDMENUCardManager.Core
 {
     /// <summary>
-    /// Fetches the homebrew CDIs published by the dreamcast-homebrew repo so a
-    /// save can put the latest builds on the card.
+    /// Fetches the CDIs published by the continuous release of a GitHub repo so
+    /// a save can put the latest builds on the card.
     /// </summary>
-    public static class HomebrewSync
+    public sealed class ReleaseSync
     {
-        public const string Repo = "richstokes/dreamcast-homebrew";
         public const string ReleaseTag = "continuous";
         private const string ChecksumAssetName = "SHA256SUMS";
-        private const string DownloadDirName = "GDMENUCardManager_homebrew";
 
-        private static readonly HttpClient _client;
+        private static readonly HttpClient _client = CreateClient();
 
-        static HomebrewSync()
+        public static readonly ReleaseSync Homebrew = new ReleaseSync("richstokes/dreamcast-homebrew", "homebrew", "GDMENUCardManager_homebrew");
+        public static readonly ReleaseSync EmuTos = new ReleaseSync("richstokes/dreamcast-EmuTOS-port", "EmuTOS", "GDMENUCardManager_emutos");
+
+        public string Repo { get; }
+
+        /// <summary>
+        /// What the download is called in progress and error messages.
+        /// </summary>
+        public string Label { get; }
+
+        private readonly string downloadDirName;
+
+        private ReleaseSync(string repo, string label, string downloadDirName)
         {
-            _client = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
-            _client.DefaultRequestHeaders.UserAgent.ParseAdd("GDMENUCardManager-Homebrew/1.0");
+            Repo = repo;
+            Label = label;
+            this.downloadDirName = downloadDirName;
+        }
+
+        private static HttpClient CreateClient()
+        {
+            var client = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("GDMENUCardManager-Homebrew/1.0");
+            return client;
         }
 
         /// <summary>
@@ -35,15 +53,15 @@ namespace GDMENUCardManager.Core
         /// left from an earlier download is removed first, so the files are
         /// always the release's current ones. Returns the local CDI paths.
         /// </summary>
-        public static async Task<List<string>> DownloadAsync(string tempFolderRoot, IProgress<string> progress = null,
+        public async Task<List<string>> DownloadAsync(string tempFolderRoot, IProgress<string> progress = null,
             CancellationToken cancellationToken = default)
         {
-            var downloadDir = Path.Combine(tempFolderRoot, DownloadDirName);
+            var downloadDir = Path.Combine(tempFolderRoot, downloadDirName);
             if (Directory.Exists(downloadDir))
                 await Task.Run(() => Directory.Delete(downloadDir, true));
             Directory.CreateDirectory(downloadDir);
 
-            progress?.Report("Looking up the latest homebrew release...");
+            progress?.Report($"Looking up the latest {Label} release...");
             var assets = await GetReleaseAssetsAsync(cancellationToken);
 
             var cdiAssets = assets
@@ -63,7 +81,7 @@ namespace GDMENUCardManager.Core
             for (int i = 0; i < cdiAssets.Count; i++)
             {
                 var asset = cdiAssets[i];
-                progress?.Report($"Downloading homebrew {i + 1} of {cdiAssets.Count}: {asset.Name}");
+                progress?.Report($"Downloading {Label} {i + 1} of {cdiAssets.Count}: {asset.Name}");
 
                 if (!checksums.TryGetValue(asset.Name, out var expectedHash))
                     throw new Exception($"{asset.Name} is not listed in {ChecksumAssetName}.");
@@ -92,7 +110,7 @@ namespace GDMENUCardManager.Core
             return paths;
         }
 
-        private static async Task<List<(string Name, string Url)>> GetReleaseAssetsAsync(CancellationToken cancellationToken)
+        private async Task<List<(string Name, string Url)>> GetReleaseAssetsAsync(CancellationToken cancellationToken)
         {
             var url = $"https://api.github.com/repos/{Repo}/releases/tags/{ReleaseTag}";
             using (var request = new HttpRequestMessage(HttpMethod.Get, url))
