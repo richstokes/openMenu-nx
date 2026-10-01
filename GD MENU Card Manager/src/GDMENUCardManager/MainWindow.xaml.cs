@@ -225,10 +225,10 @@ namespace GDMENUCardManager
             set { Manager.EnableHomebrewSync = value; RaisePropertyChanged(); SaveHomebrewSyncConfig(); }
         }
 
-        public bool EnableEmuTosSync
+        public bool EnableDreamTosSync
         {
-            get { return Manager.EnableEmuTosSync; }
-            set { Manager.EnableEmuTosSync = value; RaisePropertyChanged(); SaveEmuTosSyncConfig(); }
+            get { return Manager.EnableDreamTosSync; }
+            set { Manager.EnableDreamTosSync = value; RaisePropertyChanged(); SaveDreamTosSyncConfig(); }
         }
 
         private readonly string fileFilterList;
@@ -292,8 +292,8 @@ namespace GDMENUCardManager
                 Manager.EnableFatSort = fatSort;
             if (bool.TryParse(ConfigurationManager.AppSettings["HomebrewSync"], out bool homebrewSync))
                 Manager.EnableHomebrewSync = homebrewSync;
-            if (bool.TryParse(ConfigurationManager.AppSettings["EmuTosSync"], out bool emuTosSync))
-                Manager.EnableEmuTosSync = emuTosSync;
+            if (bool.TryParse(ConfigurationManager.AppSettings["DreamTosSync"], out bool dreamTosSync))
+                Manager.EnableDreamTosSync = dreamTosSync;
 
             // Disc Image Options
             if (bool.TryParse(ConfigurationManager.AppSettings["EnableGDIShrink"], out bool gdiShrink))
@@ -985,13 +985,13 @@ namespace GDMENUCardManager
             }
         }
 
-        private void SaveEmuTosSyncConfig()
+        private void SaveDreamTosSyncConfig()
         {
             if (Core.Manager.ConfigReadOnly) return;
             try
             {
                 var config = ConfigurationManager.OpenExeConfiguration(System.Configuration.ConfigurationUserLevel.None);
-                SetOrAddSetting(config, "EmuTosSync", Manager.EnableEmuTosSync.ToString());
+                SetOrAddSetting(config, "DreamTosSync", Manager.EnableDreamTosSync.ToString());
                 config.Save(System.Configuration.ConfigurationSaveMode.Modified);
                 ConfigurationManager.RefreshSection("appSettings");
             }

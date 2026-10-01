@@ -22,7 +22,7 @@ namespace GDMENUCardManager.Core
         private static readonly HttpClient _client = CreateClient();
 
         public static readonly ReleaseSync Homebrew = new ReleaseSync("richstokes/dreamcast-homebrew", "homebrew", "GDMENUCardManager_homebrew");
-        public static readonly ReleaseSync EmuTos = new ReleaseSync("richstokes/dreamcast-EmuTOS-port", "EmuTOS", "GDMENUCardManager_emutos");
+        public static readonly ReleaseSync DreamTos = new ReleaseSync("richstokes/Dream-TOS", "Dream TOS", "GDMENUCardManager_dreamtos");
 
         public string Repo { get; }
 
@@ -48,10 +48,11 @@ namespace GDMENUCardManager.Core
         }
 
         /// <summary>
-        /// Downloads every CDI from the release into a fresh folder under
-        /// tempFolderRoot, checked against the release's SHA256SUMS. Anything
-        /// left from an earlier download is removed first, so the files are
-        /// always the release's current ones. Returns the local CDI paths.
+        /// Downloads every CDI listed in the release's SHA256SUMS into a fresh
+        /// folder under tempFolderRoot, checked against that list. A CDI the
+        /// list does not name is left over from an earlier build and is skipped.
+        /// Anything left from an earlier download is removed first, so the files
+        /// are always the release's current ones. Returns the local CDI paths.
         /// </summary>
         public async Task<List<string>> DownloadAsync(string tempFolderRoot, IProgress<string> progress = null,
             CancellationToken cancellationToken = default)
@@ -64,12 +65,6 @@ namespace GDMENUCardManager.Core
             progress?.Report($"Looking up the latest {Label} release...");
             var assets = await GetReleaseAssetsAsync(cancellationToken);
 
-            var cdiAssets = assets
-                .Where(a => a.Name.EndsWith(".cdi", StringComparison.OrdinalIgnoreCase))
-                .ToList();
-            if (cdiAssets.Count == 0)
-                throw new Exception($"The \"{ReleaseTag}\" release of {Repo} has no CDI files.");
-
             var checksumAsset = assets.FirstOrDefault(a => a.Name == ChecksumAssetName);
             if (checksumAsset.Url == null)
                 throw new Exception($"The \"{ReleaseTag}\" release of {Repo} has no {ChecksumAssetName} file.");
@@ -77,14 +72,17 @@ namespace GDMENUCardManager.Core
             var checksumText = await _client.GetStringAsync(checksumAsset.Url, cancellationToken);
             var checksums = ParseChecksums(checksumText);
 
+            var cdiAssets = assets
+                .Where(a => a.Name.EndsWith(".cdi", StringComparison.OrdinalIgnoreCase) && checksums.ContainsKey(a.Name))
+                .ToList();
+            if (cdiAssets.Count == 0)
+                throw new Exception($"The \"{ReleaseTag}\" release of {Repo} has no CDI files listed in {ChecksumAssetName}.");
+
             var paths = new List<string>();
             for (int i = 0; i < cdiAssets.Count; i++)
             {
                 var asset = cdiAssets[i];
                 progress?.Report($"Downloading {Label} {i + 1} of {cdiAssets.Count}: {asset.Name}");
-
-                if (!checksums.TryGetValue(asset.Name, out var expectedHash))
-                    throw new Exception($"{asset.Name} is not listed in {ChecksumAssetName}.");
 
                 var path = Path.Combine(downloadDir, asset.Name);
                 using (var response = await _client.GetAsync(asset.Url, HttpCompletionOption.ResponseHeadersRead, cancellationToken))
@@ -101,7 +99,7 @@ namespace GDMENUCardManager.Core
                     using (var sha = SHA256.Create())
                         return Convert.ToHexString(sha.ComputeHash(stream));
                 });
-                if (!actualHash.Equals(expectedHash, StringComparison.OrdinalIgnoreCase))
+                if (!actualHash.Equals(checksums[asset.Name], StringComparison.OrdinalIgnoreCase))
                     throw new Exception($"{asset.Name} failed its checksum check. Try saving again.");
 
                 paths.Add(path);

@@ -138,10 +138,10 @@ namespace GDMENUCardManager.Core
         public bool EnableHomebrewSync = false;
 
         /// <summary>
-        /// Set true to download the latest EmuTOS Dreamcast port CDI on each
-        /// save and put it on the card, replacing any copy already there.
+        /// Set true to download the latest Dream TOS CDI on each save and put
+        /// it on the card, replacing any copy already there.
         /// </summary>
-        public bool EnableEmuTosSync = false;
+        public bool EnableDreamTosSync = false;
 
         // set during save when patching changes a flag after the list text was built
         private bool savePatchChangedFlags;
@@ -2095,7 +2095,7 @@ namespace GDMENUCardManager.Core
                 if (stranded.Count > 0)
                     throw new Exception(CardOrder.StrandedMessage(sdPath, stranded));
 
-                if ((ItemList.Count == 0 && !EnableHomebrewSync && !EnableEmuTosSync) || await Helper.DependencyManager.ShowYesNoDialog("Confirmation", $"Save changes to \"{sdPath}\" drive?") == false)
+                if ((ItemList.Count == 0 && !EnableHomebrewSync && !EnableDreamTosSync) || await Helper.DependencyManager.ShowYesNoDialog("Confirmation", $"Save changes to \"{sdPath}\" drive?") == false)
                 {
                     return false;
                 }
@@ -2111,7 +2111,7 @@ namespace GDMENUCardManager.Core
                 if (EnableHomebrewSync && !await SyncRelease(ReleaseSync.Homebrew, tempFolderRoot))
                     return false;
 
-                if (EnableEmuTosSync && !await SyncRelease(ReleaseSync.EmuTos, tempFolderRoot))
+                if (EnableDreamTosSync && !await SyncRelease(ReleaseSync.DreamTos, tempFolderRoot))
                     return false;
 
                 containsCompressedFile = ItemList.Any(item =>
