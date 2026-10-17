@@ -12,7 +12,7 @@
 extern void dreamcast_launch_disc(const struct gd_item* disc);
 
 /* Measured on the KOS millisecond clock, which starts when openMenu boots */
-#define DCLOAD_AUTOBOOT_MS 15000
+#define DCLOAD_AUTOBOOT_MS 10000
 
 static const gd_item* target;
 static int armed;

@@ -1,7 +1,7 @@
 #pragma once
 
 /* Hands-off boot into dcload-ip. When the card carries a dcload-ip image and
- * nobody touches a controller, keyboard or mouse during the first 15 seconds
+ * nobody touches a controller, keyboard or mouse during the first 10 seconds
  * after power on, that image is launched as if it had been picked from the
  * list. Any input before then cancels it for the rest of the session. */
 
