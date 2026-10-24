@@ -149,8 +149,12 @@ savefile_defaults() {
     sf_beep[0] = BEEP_OFF;
     sf_multidisc[0] = MULTIDISC_SHOW;
     sf_multidisc_grouping[0] = MULTIDISC_GROUPING_ANYWHERE;
-    sf_custom_theme[0] = THEME_OFF;
-    sf_custom_theme_num[0] = THEME_0;
+    /* SegaBlue (THEME/FOLDERS_3). The index is a slot in the packed folder
+     * theme list, which matches the folder number while FOLDERS_0 to 2 are on
+     * the disc, as they are in every card manager build. If it is out of
+     * range the Folders style falls back to its default theme. */
+    sf_custom_theme[0] = THEME_ON;
+    sf_custom_theme_num[0] = THEME_3;
     sf_bios_3d[0] = BIOS_3D_STANDARD;
     sf_scroll_art[0] = SCROLL_ART_ON;
     sf_scroll_index[0] = SCROLL_INDEX_ON;

@@ -178,7 +178,7 @@ namespace GDMENUCardManager
             if (_style == style)
                 return;
             _style = style;
-            RefreshThemes(null);
+            RefreshThemes(MenuOptionsManager.DefaultThemeId(style));
         }
 
         private void RefreshThemes(string preferredThemeId)

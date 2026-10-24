@@ -161,7 +161,7 @@ namespace GDMENUCardManager
             RaisePropertyChanged(nameof(IsStyleScroll));
             RaisePropertyChanged(nameof(IsStyleGrid3));
             RaisePropertyChanged(nameof(IsStyleLineDesc));
-            RefreshThemes(null);
+            RefreshThemes(MenuOptionsManager.DefaultThemeId(style));
         }
 
         private void RefreshThemes(string preferredThemeId)

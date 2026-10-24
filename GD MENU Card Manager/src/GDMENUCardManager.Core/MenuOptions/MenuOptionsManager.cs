@@ -29,7 +29,7 @@ namespace GDMENUCardManager.Core.MenuOptions
     {
         public bool ForceStyleTheme { get; set; }
         public MenuStyle Style { get; set; } = MenuStyle.Folders;
-        public string ThemeId { get; set; } = "DEFAULT";
+        public string ThemeId { get; set; } = MenuOptionsManager.DefaultThemeId(MenuStyle.Folders);
 
         public bool BgmEnabled { get; set; }
         public string BgmSourceFile { get; set; }
@@ -83,9 +83,16 @@ namespace GDMENUCardManager.Core.MenuOptions
             }
         }
 
+        // Folders starts on SegaBlue, the same theme a fresh openMenu save uses.
         public static string DefaultThemeId(MenuStyle style)
         {
-            return style == MenuStyle.LineDesc || style == MenuStyle.Grid3 ? "NTSC_U" : "DEFAULT";
+            switch (style)
+            {
+                case MenuStyle.LineDesc:
+                case MenuStyle.Grid3: return "NTSC_U";
+                case MenuStyle.Folders: return "FOLDERS_3";
+                default: return "DEFAULT";
+            }
         }
 
         /// <summary>

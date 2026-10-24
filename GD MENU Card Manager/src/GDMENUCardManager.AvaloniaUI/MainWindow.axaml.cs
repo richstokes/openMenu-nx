@@ -270,6 +270,15 @@ namespace GDMENUCardManager
             set { Manager.EnableDreamTosSync = value; RaisePropertyChanged(); SaveDreamTosSyncConfig(); }
         }
 
+        public bool IsMacOS => RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
+
+        private bool enableAutoEject;
+        public bool EnableAutoEject
+        {
+            get { return enableAutoEject; }
+            set { enableAutoEject = value; RaisePropertyChanged(); SaveAutoEjectConfig(); }
+        }
+
         private readonly List<FilePickerFileType> fileFilterList;
 
 
@@ -400,6 +409,7 @@ namespace GDMENUCardManager
                 Manager.EnableHomebrewSync = homebrewSync;
             if (bool.TryParse(ConfigurationManager.AppSettings["DreamTosSync"], out bool dreamTosSync))
                 Manager.EnableDreamTosSync = dreamTosSync;
+            bool.TryParse(ConfigurationManager.AppSettings["AutoEject"], out enableAutoEject);
 
             // Disc Image Options
             HaveGDIShrinkBlacklist = File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.GdiShrinkBlacklistFile));
@@ -1606,6 +1616,7 @@ namespace GDMENUCardManager
                 return;
             dg1.CommitEdit();
             IsBusy = true;
+            bool ejected = false;
             try
             {
                 // Check for multi-disc items without serial (openMenu only)
@@ -1661,7 +1672,18 @@ namespace GDMENUCardManager
 
                 if (await Manager.Save(TempFolder))
                 {
-                    await MessageBoxManager.GetMessageBoxStandard("Information", "Done!", windowStartupLocation: WindowStartupLocation.CenterOwner).ShowWindowDialogAsync(this);
+                    string message = "Done!";
+                    // Only a selected drive is ejected. A custom path is a folder that
+                    // could be anywhere, including the Mac's own disk.
+                    if (EnableAutoEject && IsMacOS && SelectedDrive != null)
+                    {
+                        var ejectError = await Helper.EjectMacVolumeAsync(SelectedDrive.RootDirectory.FullName);
+                        message = ejectError == null
+                            ? "Done! The SD card was ejected and can be removed."
+                            : $"Done, but the SD card could not be ejected:\n\n{ejectError}";
+                        ejected = ejectError == null;
+                    }
+                    await MessageBoxManager.GetMessageBoxStandard("Information", message, windowStartupLocation: WindowStartupLocation.CenterOwner).ShowWindowDialogAsync(this);
                 }
             }
             catch (Exception ex)
@@ -1672,6 +1694,13 @@ namespace GDMENUCardManager
             {
                 IsBusy = false;
                 updateTotalSize();
+            }
+
+            // The ejected card is gone from the drive list, so drop it from the window too.
+            if (ejected)
+            {
+                SelectedDrive = null;
+                FillDriveList(true);
             }
         }
 
@@ -1864,6 +1893,22 @@ namespace GDMENUCardManager
             {
                 var config = ConfigurationManager.OpenExeConfiguration(System.Configuration.ConfigurationUserLevel.None);
                 SetOrAddSetting(config, "HomebrewSync", Manager.EnableHomebrewSync.ToString());
+                config.Save(System.Configuration.ConfigurationSaveMode.Modified);
+                ConfigurationManager.RefreshSection("appSettings");
+            }
+            catch
+            {
+                // Ignore errors saving config
+            }
+        }
+
+        private void SaveAutoEjectConfig()
+        {
+            if (Core.Manager.ConfigReadOnly) return;
+            try
+            {
+                var config = ConfigurationManager.OpenExeConfiguration(System.Configuration.ConfigurationUserLevel.None);
+                SetOrAddSetting(config, "AutoEject", enableAutoEject.ToString());
                 config.Save(System.Configuration.ConfigurationSaveMode.Modified);
                 ConfigurationManager.RefreshSection("appSettings");
             }

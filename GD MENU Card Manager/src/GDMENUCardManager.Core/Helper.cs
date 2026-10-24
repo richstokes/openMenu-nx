@@ -284,6 +284,44 @@ namespace GDMENUCardManager.Core
             }
         }
 
+        /// <summary>
+        /// Ejects the macOS volume mounted at mountPoint with diskutil, so the card
+        /// can be pulled straight away. Returns null on success, otherwise the
+        /// reason diskutil gave.
+        /// </summary>
+        public static async Task<string> EjectMacVolumeAsync(string mountPoint)
+        {
+            try
+            {
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = "diskutil",
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                };
+                startInfo.ArgumentList.Add("eject");
+                startInfo.ArgumentList.Add(mountPoint);
+
+                using (var process = Process.Start(startInfo))
+                {
+                    var stdout = process.StandardOutput.ReadToEndAsync();
+                    var stderr = process.StandardError.ReadToEndAsync();
+                    await process.WaitForExitAsync();
+                    if (process.ExitCode == 0)
+                        return null;
+
+                    var reason = (await stderr).Trim();
+                    return reason.Length > 0 ? reason : (await stdout).Trim();
+                }
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+
         public static void TryMakeDirectoryWritable(string directoryPath)
         {
             if (!Directory.Exists(directoryPath))
